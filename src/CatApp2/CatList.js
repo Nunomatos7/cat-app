@@ -1,31 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchCats } from './thunks';
-import { setPage } from '../redux/catSlice';
+import React, { useState } from 'react';
+import { useFetchCatsQuery } from '../redux/rtkApiSLice';
 import styled from 'styled-components';
 import Spinner from './Loader';
 
 const CatList = () => {
-  const dispatch = useDispatch();
-  const { data, loading, error, page } = useSelector((state) => state.cats);
-
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [pendingLimit, setPendingLimit] = useState(10);
   const [order, setOrder] = useState('asc');
-  const [limit, setLimit] = useState(10);
-  const [pendingLimit, setPendingLimit] = useState(limit);
 
-  useEffect(() => {
-    dispatch(fetchCats(page, limit, order));
-  }, [dispatch, page, limit, order]);
+  const { data, error, isLoading } = useFetchCatsQuery({ page, limit, order });
 
   const applyLimit = () => {
-    setLimit(pendingLimit); // Update the limit
-    dispatch(fetchCats(1, pendingLimit, order)); // Fetch new data with updated limit
+    setLimit(pendingLimit);
+    setPage(1);
   };
   
-  
 
-  if (loading) return <Spinner />;
-  if (error) return <p>Error: {error}</p>;
+  if (isLoading) return <Spinner />;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <Container>
@@ -56,17 +49,17 @@ const CatList = () => {
         </ResultsPerPage>
       </Controls>
       <Grid>
-        {data.map((cat) => (
+        {data?.map((cat) => (
           <Card key={cat.id}>
             <img src={cat.url} alt="Cat" />
           </Card>
         ))}
       </Grid>
       <Pagination>
-        <Button onClick={() => dispatch(setPage(page - 1))} disabled={page === 1}>
+        <Button onClick={() => setPage((prev) => Math.max(prev - 1, 1))} disabled={page === 1}>
           Previous
         </Button>
-        <Button onClick={() => dispatch(setPage(page + 1))}>Next</Button>
+        <Button onClick={() => setPage((prev) => prev + 1)}>Next</Button>
       </Pagination>
     </Container>
   );
@@ -140,7 +133,6 @@ const Card = styled.div`
   }
 `;
 
-
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -151,16 +143,34 @@ const Container = styled.div`
   gap: 20px;
 `;
 
-const ResultsPerPage = styled.div`
+const Controls = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 20px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    color: #333;
+  }
+
+  select,
+  input {
+    padding: 5px;
+    margin-top: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  input {
+    width: 60px;
+    text-align: center;
+  }
 `;
 
-const ResultsInput = styled.div`
+const Pagination = styled.div`
   display: flex;
-  flex-direction: row;
-  gap: 5px;
+  gap: 10px;
 `;
 
 const Button = styled.button`
@@ -185,28 +195,16 @@ const Button = styled.button`
   }
 `;
 
-const Controls = styled.div`
+const ResultsPerPage = styled.div`
   display: flex;
-  gap: 20px;
+  flex-direction: column;
+  align-items: center;
+`;
 
-  label {
-    display: flex;
-    flex-direction: column;
-    font-weight: bold;
-    color: #333;
-  }
-
-  select,
-  input {
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-
-  input {
-    width: 60px;
-    text-align: center;
-  }
+const ResultsInput = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
 `;
 
 const ApplyButton = styled.button`
@@ -222,11 +220,6 @@ const ApplyButton = styled.button`
   &:hover {
     background: #45a049;
   }
-`;
-
-const Pagination = styled.div`
-  display: flex;
-  gap: 10px;
 `;
 
 export default CatList;
