@@ -20,9 +20,9 @@ const App = () => {
           </button>
           <nav>
             <NavLink to="/" end>
-              CatApp 1
+              Cat App - Redux thunks
             </NavLink>
-            <NavLink to="/catapp2">CatApp 2</NavLink>
+            <NavLink to="/catapp2">CatApp - RTK Query</NavLink>
           </nav>
         </Header>
         <Main>
